@@ -25,7 +25,9 @@ connection.commit()
 @bot.message_handler(commands=['start'], content_types=['text'])
 def main(message):
     bot.send_message(message.chat.id,
-                     'Hello! Use:\n/new_exchange - to create a new exchange\n/open_exchange - to join existing exchange')
+                     'Hello! Use:\n/new_exchange - to create a new exchange\n'
+                     '/open_exchange - to join existing exchange\n\n'
+                     'Find source code on: https://github.com/artkegor/SafeChange')
 
 
 # Creator of exchange code side
