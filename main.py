@@ -6,7 +6,7 @@ import time
 import telebot
 
 # Bot initialization (don't show your token ^^)
-bot = telebot.TeleBot('th1s_is_n0t_a_t0k3n');
+bot = telebot.TeleBot('th1s_is_n0t_a_t0k3n')
 
 # DB initialization
 connection = sqlite3.connect('exchange_database.db', check_same_thread=False)
@@ -74,6 +74,9 @@ def send_creator_text(message):
         rows = cursor.fetchone()
         if rows is not None:
             bot.send_message(message.chat.id, str(rows[2]))
+            # Deleting data from DB
+            cursor.execute('DELETE FROM Exchanges WHERE id=?', (new_code,))
+            connection.commit()
             return
         time.sleep(1)
 
