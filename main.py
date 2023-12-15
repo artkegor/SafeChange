@@ -15,7 +15,9 @@ cursor.execute('''
 CREATE TABLE IF NOT EXISTS Exchanges 
 (id TEXT,
 text_creator TEXT,
-text_opener TEXT)
+photo_creator BLOB,
+text_opener TEXT,
+photo_opener BLOB)
 ''')
 
 connection.commit()
@@ -40,14 +42,15 @@ def new_exchange(message):
                                       f'Send this to the person, you are exchanging information with.',
                      parse_mode='html')
 
-    on_create_data = (new_code, '-', '-')
-    on_create_request = 'INSERT INTO Exchanges(id, text_creator, text_opener) VALUES (?, ?, ?)'
+    on_create_data = (new_code, '-', '-', '-', '-')
+    on_create_request = 'INSERT INTO Exchanges(id, text_creator, photo_creator, text_opener, photo_opener) ' \
+                        'VALUES (?, ?, ?, ?, ?)'
     cursor.execute(on_create_request, on_create_data);
     connection.commit()
 
     # Receiving text from user and inserting it into DB under generated code
     creator_sends_text = bot.send_message(message.chat.id, 'Now send me the text, you want to send to another person')
-    bot.register_next_step_handler(creator_sends_text, send_creator_text)
+    bot.register_next_step_handler(creator_sends_text, send_creator_data)
 
 
 # Generating the code
@@ -59,23 +62,38 @@ def generate_code():
 
 
 # Inserting creator text into DB
-def send_creator_text(message):
-    creator_text = message.text
-    update_text_creator = 'UPDATE Exchanges SET text_creator = ? WHERE id = ?'
-    cursor.execute(update_text_creator, (creator_text, new_code))
-    connection.commit()
+def send_creator_data(message):
+    if message.content_type == 'text':
+        creator_text = message.text
+        update_text_creator = 'UPDATE Exchanges SET text_creator = ? WHERE id = ?'
+        cursor.execute(update_text_creator, (creator_text, new_code))
+        connection.commit()
+    elif message.content_type == 'photo':
+        creator_photo_info = bot.get_file(message.photo[-1].file_id)
+        downloaded_creator_photo = bot.download_file(creator_photo_info.file_path)
+        blob_creator_photo = sqlite3.Binary(downloaded_creator_photo)
+        update_photo_creator = 'UPDATE Exchanges SET photo_creator = ? WHERE id = ?'
+        cursor.execute(update_photo_creator, (blob_creator_photo, new_code))
+        connection.commit()
+    else:
+        bot.send_message(message.chat.id, 'Bot supports only text or image. Try again')
+        return
+
     bot.send_message(message.chat.id, 'Got your message!')
 
     # Receiving text from opener
     bot.send_message(message.chat.id, 'Now I am waiting the text from another person...')
     while True:
-        cursor.execute('SELECT * FROM Exchanges WHERE id = ? AND text_opener != "-"',
+        cursor.execute('SELECT * FROM Exchanges WHERE id = ? AND (text_opener != "-" or photo_opener != "-")',
                        (new_code,))
         rows = cursor.fetchone()
         if rows is not None:
-            bot.send_message(message.chat.id, str(rows[2]))
-            # Deleting data from DB
-            cursor.execute('DELETE FROM Exchanges WHERE id=?', (new_code,))
+            if rows[4] != '-':
+                opener_photo_io = bytes(rows[4])
+                bot.send_photo(message.chat.id, opener_photo_io)
+            elif rows[3] != '-':
+                bot.send_message(message.chat.id, str(rows[3]))
+            cursor.execute('DELETE FROM Exchanges WHERE id = ?', (new_code,))
             connection.commit()
             return
         time.sleep(1)
@@ -101,7 +119,7 @@ def get_id(message):
         # Going to the next step
         opener_sends_text = bot.send_message(message.chat.id,
                                              'Now send me the text you want to exchange with another person')
-        bot.register_next_step_handler(opener_sends_text, send_opener_text)
+        bot.register_next_step_handler(opener_sends_text, send_opener_data)
 
     else:
         bot.send_message(message.chat.id, 'This code does not exist.')
@@ -109,21 +127,37 @@ def get_id(message):
 
 
 # Inserting opener text into DB
-def send_opener_text(message):
-    opener_text = message.text
-    update_text_opener = 'UPDATE Exchanges SET text_opener = ? WHERE id = ?'
-    cursor.execute(update_text_opener, (opener_text, id_to_check))
-    connection.commit()
+def send_opener_data(message):
+    if message.content_type == 'text':
+        opener_text = message.text
+        update_text_opener = 'UPDATE Exchanges SET text_opener = ? WHERE id = ?'
+        cursor.execute(update_text_opener, (opener_text, id_to_check))
+        connection.commit()
+    elif message.content_type == 'photo':
+        opener_photo_info = bot.get_file(message.photo[-1].file_id)
+        downloaded_opener_photo = bot.download_file(opener_photo_info.file_path)
+        blob_opener_photo = sqlite3.Binary(downloaded_opener_photo)
+        update_photo_opener = 'UPDATE Exchanges SET photo_opener = ? WHERE id = ?'
+        cursor.execute(update_photo_opener, (blob_opener_photo, id_to_check))
+        connection.commit()
+    else:
+        bot.send_message(message.chat.id, 'Bot supports only text or image. Try again')
+        return
+
     bot.send_message(message.chat.id, 'Got your message!')
 
     # Receiving text from creator
     bot.send_message(message.chat.id, 'Now I am waiting the text from another person...')
     while True:
-        cursor.execute('SELECT * FROM Exchanges WHERE id = ? AND text_creator != "-"',
+        cursor.execute('SELECT * FROM Exchanges WHERE id = ? AND (text_creator != "-" OR photo_creator != "-")',
                        (id_to_check,))
         rows = cursor.fetchone()
         if rows is not None:
-            bot.send_message(message.chat.id, str(rows[1]))
+            if rows[2] != '-':
+                creator_photo_io = bytes(rows[2])
+                bot.send_photo(message.chat.id, creator_photo_io)
+            elif rows[1] != '-':
+                bot.send_message(message.chat.id, str(rows[1]))
             return
         time.sleep(1)
 
