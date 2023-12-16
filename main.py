@@ -5,7 +5,7 @@ import time
 
 import telebot
 
-# Bot initialization (don't show your token ^^)
+# Bot initialization (fake token)
 bot = telebot.TeleBot('th1s_is_n0t_a_t0k3n')
 
 # DB initialization
