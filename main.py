@@ -23,13 +23,34 @@ image_opener BLOB)
 connection.commit()
 
 
-# Main function for first start or help
+# Main function for first start
 @bot.message_handler(commands=['start'], content_types=['text'])
 def main(message):
+    bot.send_message(message.chat.id, 'Hello! Use /help to see available commands.')
+
+
+# All commands
+@bot.message_handler(commands=['help'], content_types=['text'])
+def help(message):
     bot.send_message(message.chat.id,
-                     'Hello! Use:\n/new_exchange - to create a new exchange\n'
-                     '/open_exchange - to join existing exchange\n\n'
+                     'Use:\n/new_exchange - to create a new exchange\n'
+                     '/open_exchange - to join existing exchange\n'
+                     '/support - to contact developer\n'
+                     '/donate - to give a donation\n\n'
                      'Find source code on: https://github.com/artkegor/SafeChange')
+
+
+# Donations
+@bot.message_handler(commands=['donate'], content_types=['text'])
+def donate(message):
+    bot.send_message(message.chat.id, 'If you feel great using this bot, you can support developer here:\n'
+                                      'https://www.donationalerts.com/r/lypoka')
+
+
+# My TG for support
+@bot.message_handler(commands=['support'], content_types=['text'])
+def support(message):
+    bot.send_message(message.chat.id, 'Any problems? Call @lypoka.')
 
 
 # Creator of exchange code side
