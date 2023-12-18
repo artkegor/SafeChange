@@ -1,3 +1,4 @@
+import logging
 import random
 import sqlite3
 import string
@@ -26,11 +27,17 @@ connection.commit()
 # Multithreading initialization (to avoid sqlite3 recursive error)
 lock = threading.Lock()
 
+# Logging for stats
+logging.basicConfig(level=logging.INFO, filename="py_log.log", filemode="w")
+
 
 # Main function for first start
 @bot.message_handler(commands=['start'], content_types=['text'])
 def main(message):
+    name_of_user = message.from_user.username
     bot.send_message(message.chat.id, 'Hello! Use /help to see available commands.')
+    # Sending logs
+    logging.info(f"Someone started bot. Nickname {name_of_user}")
 
 
 # All commands
