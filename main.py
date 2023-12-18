@@ -8,7 +8,7 @@ import time
 import telebot
 
 # Bot initialization (fake token)
-bot = telebot.TeleBot('6628340314:AAHkFdShYnLJlJ2oS-ZxDyA9HmYQwmYR27k')
+bot = telebot.TeleBot('th1s_is_n0t_a_t0k3n')
 
 # DB initialization
 connection = sqlite3.connect('exchange_database.db', check_same_thread=False)
