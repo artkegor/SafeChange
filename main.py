@@ -31,7 +31,7 @@ lock = threading.Lock()
 @bot.message_handler(commands=['start'], content_types=['text'])
 def main(message):
     name_of_user = message.from_user.username
-    bot.send_message(message.chat.id, 'Hello! Use /help to see available commands.')
+    bot.send_message(message.chat.id, 'Привет! Отправь /help чтобы увидеть список команд.')
     # TXT-logs for better reliability
     with open('usernames.txt', 'a') as file:
         file.write(f"{name_of_user} started the bot.\n")
@@ -41,24 +41,24 @@ def main(message):
 @bot.message_handler(commands=['help'], content_types=['text'])
 def help(message):
     bot.send_message(message.chat.id,
-                     'Use:\n/new_exchange - to create a new exchange\n'
-                     '/open_exchange - to join existing exchange\n'
-                     '/support - to contact developer\n'
-                     '/donate - to give a donation\n\n'
-                     'Find source code on: https://github.com/artkegor/SafeChange')
+                     'Отправь мне:\n/new_exchange - чтобы создать новый обмен\n'
+                     '/open_exchange - чтобы открыть существующий обмен\n'
+                     '/support - чтобы связаться с разработчиком\n'
+                     '/donate - чтобы помочь нам с развитием\n\n'
+                     'Исходный код: https://github.com/artkegor/SafeChange')
 
 
 # Donations
 @bot.message_handler(commands=['donate'], content_types=['text'])
 def donate(message):
-    bot.send_message(message.chat.id, 'If you feel great using this bot, you can support developer here:\n'
+    bot.send_message(message.chat.id, 'Если тебе помог наш бот, ты можешь поддержать нас копеечкой:\n'
                                       'https://www.donationalerts.com/r/lypoka')
 
 
 # My TG for support
 @bot.message_handler(commands=['support'], content_types=['text'])
 def support(message):
-    bot.send_message(message.chat.id, 'Any problems? Call @lypoka.')
+    bot.send_message(message.chat.id, 'Возникли проблемы? Пиши - @lypoka.')
 
 
 # Creator of exchange code side
@@ -67,8 +67,9 @@ def new_exchange(message):
     # Generation of exchange code and inserting it to DB
     global new_code
     new_code = generate_code()
-    bot.send_message(message.chat.id, f'<code>{new_code}</code>  —  here is your code.\n'
-                                      f'Send this to the person, you are exchanging information with.',
+    bot.send_message(message.chat.id, f'<code>{new_code}</code>  —  это код обмена.\n'
+                                      f'Отправь его собеседнику. '
+                                      f'Через команду /open_exchange он присоединится к обмену.',
                      parse_mode='html')
 
     # Inserting whole exchange field in DB
@@ -81,7 +82,8 @@ def new_exchange(message):
 
     # Receiving data from user and inserting it into DB under generated code
     creator_sends_text = bot.send_message(message.chat.id,
-                                          'Now send me the text or image, you want to send to another person')
+                                          'Теперь пришли мне текст или фотографию, '
+                                          'которую ты хочешь отправить собеседнику.')
     bot.register_next_step_handler(creator_sends_text, send_creator_data)
 
 
@@ -113,12 +115,12 @@ def send_creator_data(message):
             connection.commit()
     # Unsupported type
     else:
-        bot.send_message(message.chat.id, 'Bot supports only text or images. Try again')
+        bot.send_message(message.chat.id, 'Бот поддерживает только текст или фотографии. Попробуй еще раз!')
         return
-    bot.send_message(message.chat.id, 'Got your message!')
+    bot.send_message(message.chat.id, 'Принял твое сообщение!\n'
+                                      'Жду информацию от другого пользователя...')
 
     # Receiving data from opener
-    bot.send_message(message.chat.id, 'Now I am waiting the data from another person...')
     while True:
         with lock:
             cursor.execute('SELECT * FROM Exchanges WHERE id = ? AND (text_opener != "-" or image_opener != "-")',
@@ -142,7 +144,7 @@ def send_creator_data(message):
 def open_exchange(message):
     # Starting exchange from opener face
     getting_user_id = bot.send_message(message.chat.id,
-                                       'Send me the code you got from another person.')
+                                       'Отправь мне код, который тебе прислал собеседник.')
     bot.register_next_step_handler(getting_user_id, get_id)
 
 
@@ -154,13 +156,14 @@ def get_id(message):
         cursor.execute('SELECT EXISTS(SELECT 1 FROM Exchanges WHERE id=?)', (id_to_check,))
         result = cursor.fetchone()
     if result[0]:
-        bot.send_message(message.chat.id, 'Got your code!')
         # Going to the next step
         opener_sends_text = bot.send_message(message.chat.id,
-                                             'Now send me the text or image you want to exchange with another person')
+                                             'Ты присоединился к обмену!'
+                                             'Теперь пришли мне текст или фотографию, '
+                                             'которую ты хочешь отправить собеседнику.')
         bot.register_next_step_handler(opener_sends_text, send_opener_data)
     else:
-        bot.send_message(message.chat.id, 'This code does not exist.')
+        bot.send_message(message.chat.id, 'Такого кода не существует. Попробуй еще раз!')
         return
 
 
@@ -184,12 +187,12 @@ def send_opener_data(message):
             connection.commit()
     # Unsupported type
     else:
-        bot.send_message(message.chat.id, 'Bot supports only text or images. Try again')
+        bot.send_message(message.chat.id, 'Бот поддерживает только текст или фотографии. Попробуй еще раз!')
         return
-    bot.send_message(message.chat.id, 'Got your message!')
+    bot.send_message(message.chat.id, 'Принял твое сообщение!\n'
+                                      'Жду информацию от другого пользователя...')
 
     # Receiving data from creator
-    bot.send_message(message.chat.id, 'Now I am waiting the data from another person...')
     while True:
         with lock:
             cursor.execute('SELECT * FROM Exchanges WHERE id = ? AND (text_creator != "-" OR image_creator != "-")',
