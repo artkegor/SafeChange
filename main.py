@@ -158,7 +158,7 @@ def get_id(message):
     if result[0]:
         # Going to the next step
         opener_sends_text = bot.send_message(message.chat.id,
-                                             'Ты присоединился к обмену!'
+                                             'Ты присоединился к обмену! '
                                              'Теперь пришли мне текст или фотографию, '
                                              'которую ты хочешь отправить собеседнику.')
         bot.register_next_step_handler(opener_sends_text, send_opener_data)
