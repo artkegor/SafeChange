@@ -31,7 +31,8 @@ lock = threading.Lock()
 @bot.message_handler(commands=['start'], content_types=['text'])
 def main(message):
     name_of_user = message.from_user.username
-    bot.send_message(message.chat.id, 'Привет! Отправь /help чтобы увидеть список команд.')
+    bot.send_message(message.chat.id, 'Привет!\n'
+                                      'Отправь /help чтобы увидеть список команд.')
     # TXT-logs for better reliability
     with open('usernames.txt', 'a') as file:
         file.write(f"{name_of_user} started the bot.\n")
@@ -158,7 +159,7 @@ def get_id(message):
     if result[0]:
         # Going to the next step
         opener_sends_text = bot.send_message(message.chat.id,
-                                             'Ты присоединился к обмену! '
+                                             'Ты присоединился к обмену!\n'
                                              'Теперь пришли мне текст или фотографию, '
                                              'которую ты хочешь отправить собеседнику.')
         bot.register_next_step_handler(opener_sends_text, send_opener_data)
