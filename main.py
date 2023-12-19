@@ -38,6 +38,9 @@ def main(message):
     bot.send_message(message.chat.id, 'Hello! Use /help to see available commands.')
     # Sending logs
     logging.info(f"Someone started bot. Nickname {name_of_user}")
+    # Also txt-logs for better reliability
+    with open('usernames.txt', 'a') as file:
+        file.write(f"{name_of_user} started the bot.\n")
 
 
 # All commands
