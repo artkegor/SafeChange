@@ -42,10 +42,10 @@ def main(message):
 @bot.message_handler(commands=['help'], content_types=['text'])
 def help(message):
     bot.send_message(message.chat.id,
-                     'Отправь мне:\n/new_exchange - чтобы создать новый обмен\n'
-                     '/open_exchange - чтобы открыть существующий обмен\n'
-                     '/support - чтобы связаться с разработчиком\n'
-                     '/donate - чтобы помочь нам с развитием\n\n'
+                     'Команды:\n/new_exchange - создать новый обмен\n'
+                     '/open_exchange - открыть существующий обмен\n'
+                     '/support - связаться с разработчиком\n'
+                     '/donate - помочь нам с развитием\n\n'
                      'Исходный код: https://github.com/artkegor/SafeChange')
 
 
@@ -69,7 +69,7 @@ def new_exchange(message):
     global new_code
     new_code = generate_code()
     bot.send_message(message.chat.id, f'<code>{new_code}</code>  —  это код обмена.\n'
-                                      f'Отправь его собеседнику. '
+                                      f'Отправь его собеседнику.\n'
                                       f'Через команду /open_exchange он присоединится к обмену.',
                      parse_mode='html')
 
@@ -122,7 +122,14 @@ def send_creator_data(message):
                                       'Жду информацию от другого пользователя...')
 
     # Receiving data from opener
+    timer_creator = time.time()
     while True:
+        if time.time() - timer_creator > 10.0:
+            with lock:
+                cursor.execute('DELETE FROM Exchanges WHERE id = ?', (new_code,))
+                connection.commit()
+            bot.send_message(message.chat.id, 'Время вышло.\nВведите /new_exchange, чтобы создать новый обмен.')
+            return
         with lock:
             cursor.execute('SELECT * FROM Exchanges WHERE id = ? AND (text_opener != "-" or image_opener != "-")',
                            (new_code,))
@@ -194,7 +201,14 @@ def send_opener_data(message):
                                       'Жду информацию от другого пользователя...')
 
     # Receiving data from creator
+    timer_opener = time.time()
     while True:
+        if time.time() - timer_opener > 10.0:
+            with lock:
+                cursor.execute('DELETE FROM Exchanges WHERE id = ?', (id_to_check,))
+                connection.commit()
+            bot.send_message(message.chat.id, 'Время вышло.\nВведите /new_exchange, чтобы создать новый обмен.')
+            return
         with lock:
             cursor.execute('SELECT * FROM Exchanges WHERE id = ? AND (text_creator != "-" OR image_creator != "-")',
                            (id_to_check,))
