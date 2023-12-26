@@ -33,7 +33,7 @@ def main(message):
     name_of_user = message.from_user.username
     bot.send_message(message.chat.id, 'Привет!\n'
                                       'Отправь /help чтобы увидеть список команд.')
-    # TXT-logs for better reliability
+    # TXT-logs for statistics
     with open('usernames.txt', 'a') as file:
         file.write(f"{name_of_user} started the bot.\n")
 
@@ -143,6 +143,9 @@ def send_creator_data(message):
             with lock:
                 cursor.execute('DELETE FROM Exchanges WHERE id = ?', (new_code,))
                 connection.commit()
+            # TXT-logs to count successful logs
+            with open('successful_exchanges.txt', 'a') as file:
+                file.write(f"Successful exchange done! {new_code}\n")
             return
         time.sleep(1)
 
