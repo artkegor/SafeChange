@@ -1,6 +1,6 @@
 FROM python:3.10
 
-WORKDIR /GBot
+WORKDIR /safechange
 
 COPY . .
 RUN pip install -U pip setuptools wheel
